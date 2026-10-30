@@ -1,0 +1,6 @@
+digraph "semantic_graph" {
+  graph [revision="0", schema_version="1"];
+  subgraph "cluster_team" {
+    "team_1" [label="Отдел аналитики"];
+  }
+}

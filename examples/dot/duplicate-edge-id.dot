@@ -1,0 +1,7 @@
+digraph "semantic_graph" {
+  graph [revision="0", schema_version="1"];
+  "person_1" [label="Анна"];
+  "team_1" [label="Отдел аналитики"];
+  "person_1" -> "team_1" [id="edge_1", label="работает в"];
+  "team_1" -> "person_1" [id="edge_1", label="включает"];
+}
