@@ -1,0 +1,6 @@
+{
+  "base_revision": 0,
+  "operations": [
+    {"op": "delete_edge", "id": "edge_1"}
+  ]
+}

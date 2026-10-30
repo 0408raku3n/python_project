@@ -1,0 +1,6 @@
+{
+  "base_revision": 0,
+  "operations": [
+    {"op": "add_edge", "id": "edge_2", "source": "person_1", "target": "missing_1", "label": "связан с"}
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "base_revision": 0,
+  "operations": [
+    {"op": "add_node", "id": "project_1", "label": "Проект"},
+    {"op": "add_edge", "id": "edge_2", "source": "person_1", "target": "project_1", "label": "участвует в"}
+  ]
+}
