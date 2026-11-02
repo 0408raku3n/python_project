@@ -182,3 +182,17 @@
 
 
 
+
+## Установка и запуск
+
+Требуется Python 3.12 или новее. В корне проекта создайте виртуальное окружение и установите пакет:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install -e ".[dev]"
+semantic-knowledge --help
+semantic-knowledge --version
+```
+
+Проверки: `pytest`, `ruff check .`, `mypy`.
