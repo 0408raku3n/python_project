@@ -6,5 +6,6 @@ __pycache__/
 .ruff_cache/
 .mypy_cache/
 .env
+.obsidian/
 build/
 dist/
