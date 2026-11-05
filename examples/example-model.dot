@@ -1,0 +1,20 @@
+digraph "semantic_graph" {
+  graph [revision="0", schema_version="1"];
+
+  "concept_document_analysis" [label="Анализ документов", type="concept"];
+  "event_foundation" [label="Основание компании «Север»", type="event"];
+  "event_release_orbita" [label="Выпуск продукта «Орбита»", type="event"];
+  "object_orbita" [label="Программный продукт «Орбита»", type="object"];
+  "org_sever" [label="Компания «Север»", type="organization"];
+  "person_anna_smirnova" [label="Анна Смирнова", type="person"];
+  "value_year_2018" [label="2018 год", type="value", value="2018", value_kind="year"];
+  "value_year_2021" [label="2021 год", type="value", value="2021", value_kind="year"];
+
+  "event_foundation" -> "person_anna_smirnova" [confidence="0.98", evidence="основана Анной Смирновой", id="edge_foundation_founder", label="founder", source_ref="doc_example_001"];
+  "event_foundation" -> "value_year_2018" [confidence="0.98", evidence="в 2018 году", id="edge_foundation_year", label="occurred_in", source_ref="doc_example_001"];
+  "event_release_orbita" -> "object_orbita" [confidence="0.99", evidence="выпустила программный продукт «Орбита»", id="edge_release_product", label="released_product", source_ref="doc_example_001"];
+  "event_release_orbita" -> "value_year_2021" [confidence="0.99", evidence="В 2021 году", id="edge_release_year", label="occurred_in", source_ref="doc_example_001"];
+  "object_orbita" -> "concept_document_analysis" [confidence="0.99", evidence="Продукт предназначен для анализа документов", id="edge_orbita_purpose", label="intended_for", source_ref="doc_example_001"];
+  "org_sever" -> "event_foundation" [confidence="0.98", evidence="Компания «Север» основана", id="edge_sever_has_foundation", label="has_event", source_ref="doc_example_001"];
+  "org_sever" -> "event_release_orbita" [confidence="0.99", evidence="компания выпустила", id="edge_sever_has_release", label="has_event", source_ref="doc_example_001"];
+}
