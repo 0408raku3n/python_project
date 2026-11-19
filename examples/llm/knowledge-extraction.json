@@ -1,0 +1,116 @@
+{
+  "contract_version": "1",
+  "entities": [
+    {
+      "local_id": "e1",
+      "name": "Компания «Север»",
+      "type": "organization",
+      "mention": "Компания «Север»"
+    },
+    {
+      "local_id": "e2",
+      "name": "Анна Смирнова",
+      "type": "person",
+      "mention": "Анной Смирновой"
+    },
+    {
+      "local_id": "e3",
+      "name": "Основание компании «Север»",
+      "type": "event",
+      "mention": "Компания «Север» основана"
+    },
+    {
+      "local_id": "e4",
+      "name": "2018 год",
+      "type": "value",
+      "mention": "2018 году",
+      "value_kind": "year",
+      "value": "2018"
+    },
+    {
+      "local_id": "e5",
+      "name": "Выпуск продукта «Орбита»",
+      "type": "event",
+      "mention": "компания выпустила программный продукт «Орбита»"
+    },
+    {
+      "local_id": "e6",
+      "name": "2021 год",
+      "type": "value",
+      "mention": "2021 году",
+      "value_kind": "year",
+      "value": "2021"
+    },
+    {
+      "local_id": "e7",
+      "name": "Программный продукт «Орбита»",
+      "type": "object",
+      "mention": "программный продукт «Орбита»"
+    },
+    {
+      "local_id": "e8",
+      "name": "Анализ документов",
+      "type": "concept",
+      "mention": "анализа документов"
+    }
+  ],
+  "relations": [
+    {
+      "local_id": "r1",
+      "source_local_id": "e1",
+      "target_local_id": "e3",
+      "relation": "has_event",
+      "evidence": "Компания «Север» основана",
+      "confidence": 0.98
+    },
+    {
+      "local_id": "r2",
+      "source_local_id": "e3",
+      "target_local_id": "e2",
+      "relation": "founder",
+      "evidence": "основана Анной Смирновой",
+      "confidence": 0.98
+    },
+    {
+      "local_id": "r3",
+      "source_local_id": "e3",
+      "target_local_id": "e4",
+      "relation": "occurred_in",
+      "evidence": "в 2018 году",
+      "confidence": 0.98
+    },
+    {
+      "local_id": "r4",
+      "source_local_id": "e1",
+      "target_local_id": "e5",
+      "relation": "has_event",
+      "evidence": "компания выпустила",
+      "confidence": 0.99
+    },
+    {
+      "local_id": "r5",
+      "source_local_id": "e5",
+      "target_local_id": "e6",
+      "relation": "occurred_in",
+      "evidence": "В 2021 году",
+      "confidence": 0.99
+    },
+    {
+      "local_id": "r6",
+      "source_local_id": "e5",
+      "target_local_id": "e7",
+      "relation": "released_product",
+      "evidence": "выпустила программный продукт «Орбита»",
+      "confidence": 0.99
+    },
+    {
+      "local_id": "r7",
+      "source_local_id": "e7",
+      "target_local_id": "e8",
+      "relation": "intended_for",
+      "evidence": "Продукт предназначен для анализа документов",
+      "confidence": 0.99
+    }
+  ],
+  "warnings": []
+}

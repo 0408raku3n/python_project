@@ -1,0 +1,14 @@
+{
+  "contract_version": "1",
+  "status": "ANSWERED",
+  "answer": "Компания «Север» была основана в 2018 году.",
+  "used_node_ids": [
+    "org_sever",
+    "event_foundation",
+    "value_year_2018"
+  ],
+  "used_edge_ids": [
+    "edge_sever_has_foundation",
+    "edge_foundation_year"
+  ]
+}

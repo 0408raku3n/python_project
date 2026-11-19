@@ -1,0 +1,17 @@
+{
+  "contract_version": "1",
+  "status": "EXPLAINED",
+  "message": "Добавлены узел «Проект» и связь участия person_1 в проекте.",
+  "items": [
+    {
+      "change_id": "c0",
+      "kind": "added",
+      "text": "Добавлен узел «Проект» (project_1)."
+    },
+    {
+      "change_id": "c1",
+      "kind": "added",
+      "text": "Добавлена связь participates_in от person_1 к project_1 (edge_2)."
+    }
+  ]
+}

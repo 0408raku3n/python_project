@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AnswerResult (contract v1)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "status",
+    "answer",
+    "used_node_ids",
+    "used_edge_ids"
+  ],
+  "properties": {
+    "contract_version": {
+      "type": "string",
+      "const": "1"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ANSWERED",
+        "INSUFFICIENT_CONTEXT"
+      ]
+    },
+    "answer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "used_node_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "used_edge_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    }
+  },
+  "if": {
+    "properties": {
+      "status": {
+        "const": "ANSWERED"
+      }
+    },
+    "required": [
+      "status"
+    ]
+  },
+  "then": {
+    "anyOf": [
+      {
+        "properties": {
+          "used_node_ids": {
+            "minItems": 1
+          }
+        }
+      },
+      {
+        "properties": {
+          "used_edge_ids": {
+            "minItems": 1
+          }
+        }
+      }
+    ]
+  },
+  "else": {
+    "properties": {
+      "used_node_ids": {
+        "maxItems": 0
+      },
+      "used_edge_ids": {
+        "maxItems": 0
+      }
+    }
+  }
+}

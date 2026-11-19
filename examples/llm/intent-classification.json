@@ -1,0 +1,7 @@
+{
+  "contract_version": "1",
+  "category": "QUESTION",
+  "confidence": 0.96,
+  "reason": "Пользователь спрашивает о годе основания компании, а не просит изменить граф.",
+  "needs_clarification": false
+}

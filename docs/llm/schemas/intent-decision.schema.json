@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "IntentDecision (contract v1)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "category",
+    "confidence",
+    "reason",
+    "needs_clarification"
+  ],
+  "properties": {
+    "contract_version": {
+      "type": "string",
+      "const": "1"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "QUESTION",
+        "UPDATE",
+        "INGEST",
+        "CLARIFICATION_REQUIRED",
+        "UNKNOWN"
+      ]
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "needs_clarification": {
+      "type": "boolean"
+    },
+    "clarification_question": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "if": {
+    "properties": {
+      "category": {
+        "const": "CLARIFICATION_REQUIRED"
+      }
+    },
+    "required": [
+      "category"
+    ]
+  },
+  "then": {
+    "properties": {
+      "needs_clarification": {
+        "const": true
+      }
+    },
+    "required": [
+      "clarification_question"
+    ]
+  },
+  "else": {
+    "properties": {
+      "needs_clarification": {
+        "const": false
+      }
+    },
+    "not": {
+      "required": [
+        "clarification_question"
+      ]
+    }
+  }
+}
