@@ -83,6 +83,8 @@ class LLMGateway(Protocol):
 | `answer.generate` | [`answer-result.schema.json`](llm/schemas/answer-result.schema.json) | [`answer-generation.json`](../examples/llm/answer-generation.json) |
 | `changes.explain` | [`change-explanation.schema.json`](llm/schemas/change-explanation.schema.json) | [`change-explanation.json`](../examples/llm/change-explanation.json) |
 
+Проверка всех четырёх примеров: `python -m pytest tests/unit/test_llm_contracts.py` (после `pip install -e ".[dev]"`). Тест также сверяет точность цитат и структуру 8 узлов / 7 связей с `docs/semantic-model.md` и `examples/example-model.dot`.
+
 Схема проверяет локальную структуру и типы. **Межполевые и межобъектные инварианты** (существование ID, уникальность ссылок, буквальная поддержка факта текстом, проверка источников, сопоставление с изменениями) проверяются Python-кодом поверх схемы: JSON Schema не видит исходный документ, граф и историю применения.
 
 ## 4. Классификация намерения: `intent.classify`

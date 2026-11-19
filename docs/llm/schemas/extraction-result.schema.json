@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ExtractionResult (contract v1)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "entities",
+    "relations",
+    "warnings"
+  ],
+  "properties": {
+    "contract_version": {
+      "type": "string",
+      "const": "1"
+    },
+    "entities": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/entity"
+      }
+    },
+    "relations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/relation"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "$defs": {
+    "entity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "local_id",
+        "name",
+        "type",
+        "mention"
+      ],
+      "properties": {
+        "local_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "object",
+            "person",
+            "organization",
+            "event",
+            "concept",
+            "value"
+          ]
+        },
+        "mention": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value_kind": {
+          "type": "string",
+          "enum": [
+            "text",
+            "integer",
+            "decimal",
+            "boolean",
+            "year",
+            "date",
+            "datetime",
+            "quantity"
+          ]
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "if": {
+        "properties": {
+          "type": {
+            "const": "value"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "then": {
+        "required": [
+          "value_kind",
+          "value"
+        ]
+      },
+      "else": {
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "value_kind"
+              ]
+            },
+            {
+              "required": [
+                "value"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "relation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "local_id",
+        "source_local_id",
+        "target_local_id",
+        "relation",
+        "evidence"
+      ],
+      "properties": {
+        "local_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_local_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_local_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "relation": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "evidence": {
+          "type": "string",
+          "minLength": 1
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    }
+  }
+}
