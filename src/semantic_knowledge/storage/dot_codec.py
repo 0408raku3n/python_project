@@ -192,7 +192,10 @@ class DotCodec:
             if not re.fullmatch(r"0|[1-9][0-9]*", graph_attrs["revision"]):
                 raise DotCodecError("INVALID_ATTRIBUTE: неверная ревизия")
             _check_graph(nodes, edges)
-            parsed = pydot.graph_from_dot_data(text)
+            try:
+                parsed = pydot.graph_from_dot_data(text)
+            except Exception as error:
+                raise DotCodecError(f"INVALID_DOT: ошибка pydot: {error}") from error
             if parsed is None or len(parsed) != 1:
                 raise DotCodecError("INVALID_DOT: не удалось разобрать граф")
             return SemanticGraph(
