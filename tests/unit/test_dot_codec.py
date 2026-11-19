@@ -4,7 +4,13 @@ from pathlib import Path
 
 import pytest
 
-from semantic_knowledge.domain.models import NodeType, SemanticEdge, SemanticGraph, SemanticNode
+from semantic_knowledge.domain.models import (
+    NodeType,
+    SemanticEdge,
+    SemanticGraph,
+    SemanticNode,
+    ValueKind,
+)
 from semantic_knowledge.storage.dot_codec import DotCodec, DotCodecError
 
 
@@ -62,3 +68,37 @@ def test_confidence_round_trip_small_and_negative_zero() -> None:
         )
         graph = SemanticGraph(nodes=(node,), edges=(edge,))
         assert codec.parse(codec.serialize(graph)) == graph
+
+
+def test_all_metadata_round_trip() -> None:
+    codec = DotCodec()
+    node = SemanticNode(
+        id="a",
+        name="Год",
+        type=NodeType.VALUE,
+        description="Строка\nдве",
+        value_kind=ValueKind.YEAR,
+        value="2024",
+    )
+    edge = SemanticEdge(
+        id="e",
+        source_node_id="a",
+        target_node_id="a",
+        relation="related_to",
+        evidence='Цитата "текст"',
+        source_ref="doc_1",
+        confidence=0.73,
+    )
+    graph = SemanticGraph(revision=3, nodes=(node,), edges=(edge,))
+    assert codec.parse(codec.serialize(graph)) == graph
+
+
+def test_pydot_exception_is_wrapped(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fail(_text: str) -> None:
+        raise RuntimeError("ошибка парсера")
+
+    monkeypatch.setattr("semantic_knowledge.storage.dot_codec.pydot.graph_from_dot_data", fail)
+    text = 'digraph "semantic_graph" { graph [revision="0", schema_version="1"]; }'
+    with pytest.raises(DotCodecError, match="INVALID_DOT") as exc:
+        DotCodec().parse(text)
+    assert isinstance(exc.value.__cause__, RuntimeError)
