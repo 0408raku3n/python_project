@@ -1,4 +1,4 @@
-"""Доменные модели семантического графа.
+"""Доменные модели семантического графа и ответов LLM.
 
 Модели неизменяемы и не зависят от библиотек сериализации. Проверяются
 обязательные поля, типы и локальные ограничения. Инварианты уровня графа
@@ -23,6 +23,7 @@ YEAR_PATTERN = re.compile(r"^[0-9]{4}$")
 QUANTITY_PATTERN = re.compile(r"^-?(0|[1-9][0-9]*)(\.[0-9]+)?\s+\S+$")
 
 SCHEMA_VERSION = "1"
+LLM_CONTRACT_VERSION = "1"
 
 
 class NodeType(StrEnum):
@@ -47,6 +48,16 @@ class ValueKind(StrEnum):
     DATE = "date"
     DATETIME = "datetime"
     QUANTITY = "quantity"
+
+
+class IntentCategory(StrEnum):
+    """Категории намерения пользователя из контракта LLM."""
+
+    QUESTION = "QUESTION"
+    UPDATE = "UPDATE"
+    INGEST = "INGEST"
+    CLARIFICATION_REQUIRED = "CLARIFICATION_REQUIRED"
+    UNKNOWN = "UNKNOWN"
 
 
 def validate_identifier(value: object, field: str) -> str:
@@ -149,6 +160,57 @@ def _validate_value(value_kind: ValueKind, value: object) -> str:
     raise ValueError(f"неизвестный тип значения: {value_kind!r}")
 
 
+def _validate_contract_version(value: object) -> str:
+    if not isinstance(value, str):
+        raise TypeError(f"contract_version должен быть строкой: {value!r}")
+    if value != LLM_CONTRACT_VERSION:
+        raise ValueError(
+            f"поддерживается только contract_version={LLM_CONTRACT_VERSION!r}: {value!r}"
+        )
+    return value
+
+
+def _validate_confidence(value: object) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise TypeError(f"confidence должен быть числом: {value!r}")
+    confidence = float(value)
+    if not math.isfinite(confidence) or not 0.0 <= confidence <= 1.0:
+        raise ValueError(f"confidence должен быть в диапазоне 0.0..1.0: {confidence!r}")
+    return confidence
+
+
+def _coerce_intent_category(value: object) -> IntentCategory:
+    if isinstance(value, IntentCategory):
+        return value
+    if isinstance(value, str):
+        try:
+            return IntentCategory(value)
+        except ValueError as error:
+            raise ValueError(f"неизвестная категория намерения: {value!r}") from error
+    raise TypeError(f"категория намерения должна быть IntentCategory или строкой: {value!r}")
+
+
+def _ensure_unique(values: Iterable[str], field: str) -> None:
+    seen: set[str] = set()
+    for value in values:
+        if value in seen:
+            raise ValueError(f"повтор {field}: {value!r}")
+        seen.add(value)
+
+
+def _as_tuple[T](values: Iterable[T], expected: type[T], field: str) -> tuple[T, ...]:
+    if isinstance(values, (str, bytes)):
+        raise TypeError(f"{field} должен быть коллекцией объектов")
+    try:
+        items = tuple(values)
+    except TypeError as error:
+        raise TypeError(f"{field} должен быть коллекцией объектов") from error
+    for item in items:
+        if not isinstance(item, expected):
+            raise TypeError(f"{field} может содержать только {expected.__name__}: {item!r}")
+    return items
+
+
 @dataclass(frozen=True, slots=True)
 class SemanticNode:
     """Сущность или самостоятельное значение семантического графа."""
@@ -198,12 +260,7 @@ class SemanticEdge:
         _optional_text(self.source_ref, "source_ref")
 
         if self.confidence is not None:
-            if isinstance(self.confidence, bool) or not isinstance(self.confidence, (int, float)):
-                raise TypeError(f"confidence должен быть числом: {self.confidence!r}")
-            confidence = float(self.confidence)
-            if not math.isfinite(confidence) or not 0.0 <= confidence <= 1.0:
-                raise ValueError(f"confidence должен быть в диапазоне 0.0..1.0: {confidence!r}")
-            object.__setattr__(self, "confidence", confidence)
+            object.__setattr__(self, "confidence", _validate_confidence(self.confidence))
 
 
 @dataclass(frozen=True, slots=True)
@@ -226,27 +283,10 @@ class SemanticGraph:
         if self.revision < 0:
             raise ValueError(f"revision не может быть отрицательным: {self.revision!r}")
 
-        nodes = self._as_tuple(self.nodes, SemanticNode, "nodes")
-        edges = self._as_tuple(self.edges, SemanticEdge, "edges")
+        nodes = _as_tuple(self.nodes, SemanticNode, "nodes")
+        edges = _as_tuple(self.edges, SemanticEdge, "edges")
         object.__setattr__(self, "nodes", nodes)
         object.__setattr__(self, "edges", edges)
-
-    @staticmethod
-    def _as_tuple[T](
-        values: Iterable[T], expected: type[T], field: str
-    ) -> tuple[T, ...]:
-        if isinstance(values, (str, bytes)):
-            raise TypeError(f"{field} должен быть коллекцией объектов")
-        try:
-            items = tuple(values)
-        except TypeError as error:
-            raise TypeError(f"{field} должен быть коллекцией объектов") from error
-        for item in items:
-            if not isinstance(item, expected):
-                raise TypeError(
-                    f"{field} может содержать только {expected.__name__}: {item!r}"
-                )
-        return items
 
     def node(self, node_id: str) -> SemanticNode:
         """Вернуть узел по идентификатору; для валидного графа ID уникальны."""
@@ -298,3 +338,139 @@ class SemanticGraph:
             nodes=tuple(self.nodes),
             edges=tuple(self.edges),
         )
+
+
+@dataclass(frozen=True, slots=True)
+class IntentDecision:
+    """Результат классификации намерения пользователя."""
+
+    category: IntentCategory
+    confidence: float
+    reason: str
+    needs_clarification: bool
+    clarification_question: str | None = None
+    contract_version: str = LLM_CONTRACT_VERSION
+
+    def __post_init__(self) -> None:
+        _validate_contract_version(self.contract_version)
+        category = _coerce_intent_category(self.category)
+        object.__setattr__(self, "category", category)
+        object.__setattr__(self, "confidence", _validate_confidence(self.confidence))
+        _require_non_empty_text(self.reason, "reason")
+
+        if not isinstance(self.needs_clarification, bool):
+            raise TypeError(
+                f"needs_clarification должен быть bool: {self.needs_clarification!r}"
+            )
+
+        requires_clarification = category is IntentCategory.CLARIFICATION_REQUIRED
+        if self.needs_clarification is not requires_clarification:
+            raise ValueError(
+                "needs_clarification должен быть true ровно для категории "
+                "CLARIFICATION_REQUIRED"
+            )
+
+        if requires_clarification:
+            _require_non_empty_text(
+                self.clarification_question,
+                "clarification_question",
+            )
+        elif self.clarification_question is not None:
+            raise ValueError(
+                "clarification_question допустим только для категории "
+                "CLARIFICATION_REQUIRED"
+            )
+
+
+@dataclass(frozen=True, slots=True)
+class ExtractedEntity:
+    """Кандидат сущности из ответа LLM; local_id действует только внутри ответа."""
+
+    local_id: str
+    name: str
+    type: NodeType
+    mention: str
+    description: str | None = None
+    value_kind: ValueKind | None = None
+    value: str | None = None
+
+    def __post_init__(self) -> None:
+        _require_non_empty_text(self.local_id, "local_id")
+        _require_non_empty_text(self.name, "name")
+        node_type = _coerce_node_type(self.type)
+        object.__setattr__(self, "type", node_type)
+        _require_non_empty_text(self.mention, "mention")
+
+        if self.description is not None:
+            _require_non_empty_text(self.description, "description")
+
+        if node_type is NodeType.VALUE:
+            if self.value_kind is None or self.value is None:
+                raise ValueError(
+                    "для сущности type='value' обязательны value_kind и value"
+                )
+            value_kind = _coerce_value_kind(self.value_kind)
+            object.__setattr__(self, "value_kind", value_kind)
+            _validate_value(value_kind, self.value)
+        elif self.value_kind is not None or self.value is not None:
+            raise ValueError(
+                "value_kind и value допустимы только для сущности type='value'"
+            )
+
+
+@dataclass(frozen=True, slots=True)
+class ExtractedRelation:
+    """Кандидат связи между сущностями одного ответа LLM."""
+
+    local_id: str
+    source_local_id: str
+    target_local_id: str
+    relation: str
+    evidence: str
+    confidence: float | None = None
+
+    def __post_init__(self) -> None:
+        _require_non_empty_text(self.local_id, "local_id")
+        _require_non_empty_text(self.source_local_id, "source_local_id")
+        _require_non_empty_text(self.target_local_id, "target_local_id")
+        validate_relation(self.relation)
+        _require_non_empty_text(self.evidence, "evidence")
+
+        if self.confidence is not None:
+            object.__setattr__(self, "confidence", _validate_confidence(self.confidence))
+
+
+@dataclass(frozen=True, slots=True)
+class ExtractionResult:
+    """Структурированный результат извлечения знаний из одного источника."""
+
+    entities: tuple[ExtractedEntity, ...] = ()
+    relations: tuple[ExtractedRelation, ...] = ()
+    warnings: tuple[str, ...] = ()
+    contract_version: str = LLM_CONTRACT_VERSION
+
+    def __post_init__(self) -> None:
+        _validate_contract_version(self.contract_version)
+        entities = _as_tuple(self.entities, ExtractedEntity, "entities")
+        relations = _as_tuple(self.relations, ExtractedRelation, "relations")
+        warnings = _as_tuple(self.warnings, str, "warnings")
+        object.__setattr__(self, "entities", entities)
+        object.__setattr__(self, "relations", relations)
+        object.__setattr__(self, "warnings", warnings)
+
+        _ensure_unique((entity.local_id for entity in entities), "local_id сущности")
+        _ensure_unique((relation.local_id for relation in relations), "local_id связи")
+
+        entity_ids = {entity.local_id for entity in entities}
+        for relation in relations:
+            missing = {
+                node_id
+                for node_id in (relation.source_local_id, relation.target_local_id)
+                if node_id not in entity_ids
+            }
+            if missing:
+                missing_ids = ", ".join(repr(node_id) for node_id in sorted(missing))
+                raise ValueError(
+                    f"связь {relation.local_id!r} ссылается на отсутствующие "
+                    f"local_id: {missing_ids}"
+                )
