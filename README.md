@@ -196,3 +196,7 @@ semantic-knowledge --version
 ```
 
 Проверки: `pytest`, `ruff check .`, `mypy`.
+
+## LLM-интеграция 
+
+Добавлены единый порт `LLMGateway`, OpenAI-адаптер, `FakeLLMGateway`, типизированные ошибки и строгая проверка JSON Schema. По умолчанию используется `fake` без сети и API-ключа. Переменные окружения и пример вызова: [docs/llm-gateway.md](docs/llm-gateway.md).
